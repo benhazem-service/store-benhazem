@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>طلب عبر الإنترنت</title>
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6d28d9">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="المحل">
+  <style>
+    :root {
+      --accent: #6d28d9;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; }
+    header { background: var(--surface); padding: 16px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 10; }
+    h1 { font-size: 20px; color: var(--accent); margin-bottom: 4px; }
+    p.subtitle { font-size: 13px; color: var(--text-muted); }
+    
+    .container { padding: 16px; max-width: 600px; margin: 0 auto; }
+    
+    .category-scroll { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 12px; margin-bottom: 16px; scrollbar-width: none; }
+    .category-scroll::-webkit-scrollbar { display: none; }
+    .cat-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid #e2e8f0; background: var(--surface); color: var(--text); font-size: 14px; white-space: nowrap; cursor: pointer; transition: 0.2s; }
+    .cat-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+    /* ── Product Card ── */
+    .product-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      position: relative;
+      border: 2px solid transparent;
+      transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .product-card:hover { box-shadow: 0 4px 16px rgba(109,40,217,0.12); transform: translateY(-2px); }
+    .product-card.in-cart { border-color: var(--accent); background: rgba(109, 40, 217, 0.04); }
+
+    /* Badge */
+    .cart-badge {
+      position: absolute; top: 8px; right: 8px;
+      background: var(--accent); color: white;
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 13px;
+      box-shadow: 0 2px 6px rgba(109,40,217,0.4); z-index: 10;
+    }
+
+    /* Product image — fills full card width with rounded top corners */
+    .product-img-wrap {
+      width: 100%; aspect-ratio: 1 / 1;
+      overflow: hidden; background: #f1f5f9;
+    }
+    .product-img-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+      display: block; transition: transform 0.3s;
+    }
+    .product-card:hover .product-img-wrap img { transform: scale(1.04); }
+    .product-img-emoji {
+      width: 100%; aspect-ratio: 1 / 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 52px; background: #f1f5f9;
+    }
+
+    /* Card body */
+    .product-card-body {
+      padding: 10px 10px 12px;
+      display: flex; flex-direction: column; flex: 1;
+    }
+    .product-name {
+      font-size: 13px; font-weight: 700;
+      color: var(--text); line-height: 1.35;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .product-variants-hint {
+      font-size: 12px; color: var(--accent);
+      font-weight: 600; margin-bottom: 6px;
+    }
+    .product-price {
+      font-size: 15px; color: var(--text); font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .product-price span.currency { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-right: 2px; }
+
+    /* Add-to-cart button */
+    .add-btn {
+      background: var(--accent); color: white;
+      border: none; padding: 9px 12px;
+      border-radius: 8px; width: 100%;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s, opacity 0.2s;
+      margin-top: auto;
+    }
+    .add-btn:active { opacity: 0.85; }
+    
+    .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); padding: 16px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; z-index: 20; max-width: 600px; margin: 0 auto; }
+    .cart-total { font-weight: bold; font-size: 16px; }
+    .checkout-btn { background: var(--accent); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    
+    /* Cart Drawer */
+    .cart-drawer { position: fixed; top: 100%; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 100; transition: top 0.3s ease-in-out; display: flex; flex-direction: column; max-width: 600px; margin: 0 auto; box-shadow: 0 -4px 20px rgba(0,0,0,0.15); }
+    .cart-drawer.active { top: 0; }
+    
+    .drawer-header { background: var(--surface); padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+    .drawer-title { font-size: 18px; font-weight: bold; }
+    .close-drawer { font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1; }
+    
+    .drawer-content { flex: 1; overflow-y: auto; padding: 16px; }
+    
+    .cart-items { margin-bottom: 24px; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 12px; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .cart-item-info { flex: 1; }
+    .cart-item-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .cart-item-price { color: var(--accent); font-size: 13px; font-weight: bold; }
+    .cart-item-controls { display: flex; align-items: center; gap: 12px; background: var(--bg); border-radius: 20px; padding: 4px 8px; }
+    .qty-btn { background: none; border: none; font-size: 18px; color: var(--text); cursor: pointer; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+    .qty-display { font-weight: bold; font-size: 14px; min-width: 20px; text-align: center; }
+
+    .order-summary { background: var(--surface); padding: 16px; border-radius: 8px; margin-bottom: 24px; font-weight: bold; display: flex; justify-content: space-between; font-size: 16px; }
+    
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; margin-bottom: 6px; font-weight: 600; }
+    .form-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 14px; }
+    .form-input:focus { outline: none; border-color: var(--accent); }
+    
+    .drawer-footer { padding: 16px; background: var(--surface); border-top: 1px solid #e2e8f0; }
+    .submit-btn { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3); }
+    .submit-btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+  </style>
+</head>
+<body>
+
+  <header style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h1 id="store-name-display">متجرنا</h1>
+      <p class="subtitle">قم باختيار طلبك وسيتم تجهيزه لك</p>
+    </div>
+    <button id="open-my-orders" style="background: white; border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer;">📦 حالة الطلبيات</button>
+  </header>
+
+  <div class="container">
+    <div class="category-scroll" id="categories-container">
+      <button class="cat-btn active" data-id="all">الكل</button>
+      <!-- Categories -->
+    </div>
+
+    <div class="grid" id="products-container">
+      <div style="text-align: center; grid-column: span 2; padding: 40px; color: #888;">جاري تحميل المنتجات...</div>
+    </div>
+  </div>
+
+  <div class="cart-bar" id="cart-bar" style="display: none; cursor: pointer;">
+    <div>
+      <div style="font-size: 12px; color: var(--text-muted);">السلة (<span id="cart-count">0</span> منتجات)</div>
+      <div class="cart-total" id="cart-total">0.00DH</div>
+    </div>
+    <button class="checkout-btn" id="open-checkout">عرض السلة</button>
+  </div>
+
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">🛒 سلة المشتريات</div>
+      <div class="close-drawer" id="close-drawer">&times;</div>
+    </div>
+    
+    <div class="drawer-content">
+      <div class="cart-items" id="drawer-cart-items">
+        <!-- Cart items injected here -->
+      </div>
+      
+      <div class="order-summary">
+        <span>الإجمالي المطلوب:</span>
+        <span id="drawer-total-price" style="color: var(--accent);">0.00DH</span>
+      </div>
+
+      <div style="background: var(--surface); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+        <h3 style="font-size: 14px; margin-bottom: 12px;">معلومات التوصيل</h3>
+        <div class="form-group">
+          <label class="form-label">الاسم الكريم</label>
+          <input type="text" id="customer-name" class="form-input" placeholder="مثال: أحمد محمد" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">رقم الهاتف (واتساب)</label>
+          <input type="tel" id="customer-phone" class="form-input" placeholder="مثال: 0612345678" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-footer">
+      <button id="add-more-products-btn" style="margin-bottom: 12px; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; background: var(--bg); border: 1px dashed var(--accent); color: var(--accent); cursor: pointer;">➕ إضافة منتجات أخرى</button>
+      <button class="submit-btn" id="submit-order">تأكيد الطلب وإرسال</button>
+    </div>
+  </div>
+
+  <div class="cart-drawer" id="orders-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">📦 طلباتي الحالية</div>
+      <button id="logout-orders-btn" style="display: none; background: none; border: none; color: var(--accent); font-weight: bold; cursor: pointer; font-size: 13px; text-decoration: underline;">تسجيل الخروج</button>
+      <div class="close-drawer" id="close-orders-drawer">&times;</div>
+    </div>
+    <div class="drawer-content">
+      <div id="orders-phone-prompt" style="padding: 20px; text-align: center;">
+        <p style="margin-bottom: 12px; font-size: 14px; color: var(--text-secondary);">يرجى إدخال رقم هاتفك للبحث عن طلباتك السابقة:</p>
+        <input type="tel" id="orders-phone-input" class="form-input" placeholder="رقم الهاتف..." style="margin-bottom: 12px; text-align: center;">
+        <button id="fetch-orders-btn" class="submit-btn" style="padding: 10px;">بحث عن الطلبات</button>
+      </div>
+      <div id="orders-list" style="display: none; flex-direction: column; gap: 12px; padding-top: 8px;">
+        <div style="text-align:center; padding: 20px; color: var(--text-muted);">جاري التحميل...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Zoom Modal -->
+  <div id="image-zoom-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; cursor: pointer; padding: 20px;">
+    <div style="position: relative; max-width: 100%; max-height: 100%;">
+      <span style="position: absolute; top: -40px; right: 0; color: white; font-size: 30px; font-weight: bold; cursor: pointer;">&times;</span>
+      <img id="image-zoom-target" src="" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+    </div>
+  </div>
+
+  <script type="module" src="customer.js?v=2"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(registration => {
+          console.log('ServiceWorker registration successful');
+        }).catch(err => {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
