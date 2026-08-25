@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#07090f" />
+  <title>ماركت برو 3D — إدارة المنتجات عن بُعد</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Custom adjustments for standalone remote view */
+    body { background: var(--bg); display: flex; flex-direction: column; min-height: 100vh; overflow-y: auto !important; height: auto !important; }
+    .header { position: sticky; top: 0; z-index: 50; }
+    .remote-container { padding: 24px; max-width: 800px; margin: 0 auto; width: 100%; flex: 1; }
+    
+    /* Login Overlay */
+    .login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+    .login-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+    
+    /* Toast (Re-implementing toast logic since we don't have app.js) */
+    .toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    
+    .product-grid-title { margin: 32px 0 16px; font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--text); display: flex; justify-content: space-between; align-items: center;}
+    
+    /* Shelf Dropdown loader */
+    .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- Login Overlay -->
+<div id="login-overlay" class="login-overlay">
+  <div class="login-box">
+    <div style="font-size: 50px; margin-bottom: 15px;">🔒</div>
+    <h2 style="margin-bottom: 20px;">لوحة الإدارة عن بُعد</h2>
+    <input type="password" id="admin-password" class="form-input" placeholder="أدخل الرقم السري..." style="text-align: center; font-size: 18px; letter-spacing: 3px;" />
+    <button id="login-btn" class="btn btn--primary" style="width: 100%; margin-top: 15px; font-size: 16px;">دخول</button>
+    <div id="login-error" style="color: var(--danger); margin-top: 10px; display: none;">الرقم السري غير صحيح!</div>
+  </div>
+</div>
+
+<header class="header" role="banner">
+  <div class="header__logo">
+    <button class="header__logo-icon" style="cursor:default;">📱</button>
+    <div class="header__logo-text">
+      <span class="header__logo-name">الإدارة عن بُعد</span>
+      <span class="header__logo-sub">إضافة منتجات ومزامنة مع المحل</span>
+    </div>
+  </div>
+  <div class="header__actions">
+    <span id="sync-status" style="font-size: 11px; padding: 4px 8px; border-radius: 20px; background: rgba(16,185,129,0.1); color: #10b981;">🟢 متصل</span>
+  </div>
+</header>
+
+<div class="remote-container">
+  
+  <!-- Add Product Card (Same HTML as Modal) -->
+  <div class="modal-box modal-box--md" style="margin: 0; width: 100%; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    <div class="modal-header">
+      <h2 class="modal-title" id="product-form-title">إضافة منتج جديد</h2>
+    </div>
+    <div class="modal-body" style="max-height: none;">
+      <form id="product-form" novalidate>
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <!-- Name & Shelf -->
+          <div style="display:flex; gap:16px; flex-wrap:wrap;">
+            <div class="form-group" style="flex:2; min-width:200px;">
+              <label class="form-label" for="product-name-input">اسم المنتج <span style="color:var(--danger)">*</span></label>
+              <input type="text" id="product-name-input" class="form-input" placeholder="مثال: عصير تفاح طبيعي 1 لتر" required />
+            </div>
+
+            <div class="form-group" style="flex:1; min-width:150px;">
+              <label class="form-label" for="product-shelf-select">القسم (الرف) <span style="color:var(--danger)">*</span></label>
+              <select id="product-shelf-select" class="form-input form-select" required>
+                <option value="">جاري التحميل...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Price & Stock -->
+          <div style="display:flex; gap:16px; flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="product-price-input">سعر البيع (د.ج) <span style="color:var(--danger)">*</span></label>
+              <input type="number" id="product-price-input" class="form-input" placeholder="0.00" min="0" step="0.01" required />
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="product-stock-input">الكمية المتوفرة <span style="color:var(--danger)">*</span></label>
+              <input type="number" id="product-stock-input" class="form-input" placeholder="0" min="0" required />
+            </div>
+          </div>
+
+          <!-- Image Upload -->
+          <div class="form-group form-group--full">
+            <label class="form-label">صورة المنتج (اختياري)</label>
+            <label class="image-upload-area" for="product-image-upload">
+              <div id="image-preview" class="image-preview" aria-hidden="true">📦</div>
+              <span class="image-upload-label">
+                <span class="image-upload-link">انقر للرفع</span> أو التقط صورة من الهاتف<br/>
+                PNG, JPG up to 2MB
+              </span>
+              <input type="file" id="product-image-upload" accept="image/*" aria-label="Upload product image" />
+            </label>
+          </div>
+
+          <!-- Variants -->
+          <div class="form-group form-group--full" style="border-top:1px solid var(--border); padding-top:16px; margin-top:4px;">
+            <label class="form-label">🎨 الألوان / الأحجام المتوفرة <span style="color:var(--text-muted); font-size:12px;">(اختياري)</span></label>
+            <p style="font-size:12px; color:var(--text-muted); margin:4px 0 12px;">أضف الخيارات المتاحة — كل خيار له سعر خاص</p>
+
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+              <input type="text" id="variant-label-input" class="form-input" placeholder="مثال: أحمر / 500 مل" style="flex:1; min-width:120px;" />
+              <select id="variant-type-select" class="form-input form-select" style="width:120px;">
+                <option value="color">🎨 لون</option>
+                <option value="size">📏 حجم</option>
+              </select>
+              <select id="variant-unit-select" class="form-input form-select" style="width:80px; display:none;">
+                <option value="مل">مل</option>
+                <option value="لتر">لتر</option>
+                <option value="غرام">غرام</option>
+                <option value="كغ">كغ</option>
+                <option value="قطعة">قطعة</option>
+              </select>
+              <input type="number" id="variant-price-input" class="form-input" placeholder="السعر" min="0" step="0.01" style="width:95px;" />
+              <button type="button" id="variant-add-btn" class="btn btn--secondary" style="padding:8px 14px; font-size:13px; white-space:nowrap;">
+                ＋ إضافة
+              </button>
+            </div>
+            <div id="variants-list" style="display:flex; flex-wrap:wrap; gap:8px; min-height:32px;"></div>
+          </div>
+
+        </div>
+        <div class="modal-footer" style="padding:16px 0 0; margin-top: 16px; border-top: 1px solid var(--border);">
+          <button type="submit" class="btn btn--primary" id="submit-btn" style="width: 100%;">
+            💾 إرسال المنتج للكاشير الأساسي
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Existing Products Grid -->
+  <div class="product-grid-title">
+    <span>المنتجات الحالية في المحل</span>
+    <span id="products-count" style="font-size: 12px; color: var(--text-muted); background: var(--surface); padding: 4px 8px; border-radius: 12px; border: 1px solid var(--border);">0</span>
+  </div>
+  <div id="products-grid" class="products-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px;">
+    <!-- Rendered dynamically -->
+    <div style="color: var(--text-muted); text-align: center; grid-column: 1 / -1; padding: 20px;">جاري تحميل المنتجات... <div class="loader"></div></div>
+  </div>
+
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script type="module" src="remote.js"></script>
+</body>
+</html>
