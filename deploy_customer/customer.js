@@ -52,24 +52,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Load catalog ──────────────────────────────────────────
   async function loadCatalog() {
-    // Try Firebase first
-    if (navigator.onLine) {
-      try {
+    try {
+      if (!navigator.onLine) {
+        // Offline fallback: use cached catalog
+        const cached = loadCatalogCache();
+        if (cached) {
+          catalog = cached;
+          initApp();
+          showToast('أنت في وضع أوفلاين - يتم عرض آخر بيانات متاحة', 'warning');
+        } else {
+          $('products-container').innerHTML = '<div style="grid-column: span 2; text-align:center; padding: 40px; color: #888;">لا توجد بيانات، يرجى الاتصال بالإنترنت</div>';
+        }
+      } else {
         await loadFromFirestore();
-        return;
-      } catch (err) {
-        console.warn('[Customer] Firestore load failed, trying cache:', err);
       }
-    }
-
-    // Offline fallback: use cached catalog
-    const cached = loadCatalogCache();
-    if (cached) {
-      catalog = cached;
-      initApp();
-      showToast('أنت غير متصل — يعمل البرنامج من الذاكرة المؤقتة', 'warning');
-    } else {
-      $('products-container').innerHTML = '<div style="grid-column: span 2; text-align:center; padding: 40px; color: #888;">لا يوجد إنترنت ولا توجد بيانات محفوظة</div>';
+    } catch (err) {
+      document.body.innerHTML += `<div style="position:fixed;top:0;left:0;right:0;background:red;color:white;padding:20px;z-index:99999;font-size:12px;direction:ltr;text-align:left;"><b>Error in loadCatalog:</b><br>${err.message}<br>${err.stack}</div>`;
     }
   }
 
