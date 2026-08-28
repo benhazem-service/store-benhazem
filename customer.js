@@ -175,6 +175,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       prodContainer.addEventListener('click', (e) => {
         const target = e.target;
         const id = target.dataset.id;
+        
+        if (target.classList.contains('add-btn') || target.classList.contains('inc-btn-grid') || target.classList.contains('dec-btn-grid')) {
+          if (!localStorage.getItem('pos_customer_name') || !localStorage.getItem('pos_customer_phone')) {
+            const modal = document.getElementById('login-modal');
+            if (modal) modal.style.display = 'flex';
+            return;
+          }
+        }
+
         if (target.classList.contains('add-btn')) {
           // Check if product has variants
           const product = catalog.products.find(p => p.id === id);
@@ -552,14 +561,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       $('nav-cart-count').textContent = count;
       $('nav-cart-count').dataset.count = count;
     }
-    if ($('cart-total'))          $('cart-total').textContent = total.toFixed(2) + 'DH';
+    if ($('nav-cart-total-price')) {
+      if (count > 0) {
+        $('nav-cart-total-price').textContent = total.toFixed(2) + 'DH';
+        $('nav-cart-total-price').style.display = 'inline';
+      } else {
+        $('nav-cart-total-price').style.display = 'none';
+      }
+    }
     if ($('drawer-total-price'))  $('drawer-total-price').textContent = total.toFixed(2) + 'DH';
 
     saveCartState();
 
-
-    const cartBar = $('cart-bar');
-    if (cartBar) cartBar.style.display = count > 0 ? 'flex' : 'none';
     if (count === 0) $('cart-drawer')?.classList.remove('active');
 
     renderDrawerItems();
@@ -663,15 +676,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ── Drawer / Cart Bar Events ─────────────────────────────
-  $('open-checkout')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    $('cart-drawer').classList.add('active');
-  });
-
-  $('cart-bar')?.addEventListener('click', () => {
-    $('cart-drawer').classList.add('active');
-  });
-
   $('close-drawer')?.addEventListener('click', () => {
     $('cart-drawer').classList.remove('active');
     if (editingOrderId) {

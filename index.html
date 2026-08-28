@@ -110,10 +110,6 @@
     }
     .add-btn:active { opacity: 0.85; }
     
-    .cart-bar { position: fixed; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; background: var(--surface); padding: 12px 16px; box-shadow: 0 -4px 12px rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; z-index: 20; max-width: 600px; margin: 0 auto; border-top-left-radius: 16px; border-top-right-radius: 16px; }
-    .cart-total { font-weight: bold; font-size: 16px; }
-    .checkout-btn { background: var(--accent); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    
     /* Cart Drawer */
     .cart-drawer { position: fixed; top: 100%; left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); background: var(--bg); z-index: 100; transition: top 0.3s ease-in-out; display: flex; flex-direction: column; max-width: 600px; margin: 0 auto; box-shadow: 0 -4px 20px rgba(0,0,0,0.15); }
     .cart-drawer.active { top: 0; }
@@ -159,12 +155,9 @@
 </head>
 <body>
 
-  <header style="display: flex; justify-content: space-between; align-items: center;">
-    <div>
-      <h1 id="store-name-display">متجرنا</h1>
-      <p class="subtitle">قم باختيار طلبك وسيتم تجهيزه لك</p>
-    </div>
-    <button id="open-my-orders" style="background: white; border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer;">📦 حالة الطلبيات</button>
+  <header>
+    <h1 id="store-name-display">متجرنا</h1>
+    <p class="subtitle">قم باختيار طلبك وسيتم تجهيزه لك</p>
   </header>
 
   <div class="container">
@@ -176,14 +169,6 @@
     <div class="grid" id="products-container">
       <div style="text-align: center; grid-column: span 2; padding: 40px; color: #888;">جاري تحميل المنتجات...</div>
     </div>
-  </div>
-
-  <div class="cart-bar" id="cart-bar" style="display: none; cursor: pointer;">
-    <div>
-      <div style="font-size: 12px; color: var(--text-muted);">السلة (<span id="cart-count">0</span> منتجات)</div>
-      <div class="cart-total" id="cart-total">0.00DH</div>
-    </div>
-    <button class="checkout-btn" id="open-checkout">عرض السلة</button>
   </div>
 
   <div class="cart-drawer" id="cart-drawer">
@@ -247,6 +232,70 @@
     </div>
   </div>
 
+  <!-- Login Modal -->
+  <div id="login-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(3px);">
+    <div style="background: var(--surface); padding: 24px; border-radius: 16px; width: 100%; max-width: 400px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <span id="close-login-modal" style="position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; color: var(--text-muted); cursor: pointer;">&times;</span>
+      <h2 style="color: var(--accent); margin-bottom: 16px; font-size: 18px; text-align: center;">تسجيل الدخول / الحساب</h2>
+      <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 20px;">يرجى إدخال بياناتك لتتمكن من إضافة المنتجات للسلة ومتابعة طلباتك.</p>
+      
+      <div class="form-group">
+        <label class="form-label">الاسم الكامل</label>
+        <input type="text" id="login-name" class="form-input" placeholder="أدخل اسمك الكريم" required>
+      </div>
+      <div class="form-group" style="margin-bottom: 24px;">
+        <label class="form-label">رقم الهاتف (واتساب)</label>
+        <input type="tel" id="login-phone" class="form-input" placeholder="مثال: 0612345678" required>
+      </div>
+      
+      <button id="login-btn" style="width: 100%; background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer;">تسجيل الدخول</button>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <div id="info-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(2px);">
+    <div style="background: var(--surface); padding: 24px; border-radius: 16px; width: 100%; max-width: 400px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto;">
+      <span id="close-info-modal" style="position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; color: var(--text-muted); cursor: pointer;">&times;</span>
+      <h2 style="color: var(--accent); margin-bottom: 16px; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        دليل الاستخدام
+      </h2>
+      
+      <div style="font-size: 14px; line-height: 1.6; color: var(--text);">
+        <p style="margin-bottom: 12px;">مرحباً بك في متجرنا! هذه خطوات بسيطة لاستخدام التطبيق:</p>
+        
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+            <span style="font-size: 18px;">🛒</span>
+            <div>
+              <strong>إضافة للسلة:</strong> تصفح المنتجات أو اسحب يميناً ويساراً للتنقل بين الأقسام، واضغط على (أضف للسلة).
+            </div>
+          </li>
+          <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+            <span style="font-size: 18px;">🛍️</span>
+            <div>
+              <strong>تأكيد الطلب:</strong> بعد الانتهاء، ادخل إلى (العربة) من الأسفل، أدخل اسمك ورقم هاتفك، ثم اضغط تأكيد.
+            </div>
+          </li>
+          <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+            <span style="font-size: 18px;">📦</span>
+            <div>
+              <strong>حالة الطلبات:</strong> تتبع حالة طلبك ومراجعته بالضغط على (حالة الطلبات) أسفل الشاشة.
+            </div>
+          </li>
+          <li style="display: flex; gap: 10px;">
+            <span style="font-size: 18px;">👤</span>
+            <div>
+              <strong>حسابي الشخصي:</strong> سيتم تفعيله قريباً لتسهيل حفظ بياناتك.
+            </div>
+          </li>
+        </ul>
+        
+        <button id="info-modal-ok" style="margin-top: 20px; width: 100%; background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.2s;">حسناً، فهمت</button>
+      </div>
+    </div>
+  </div>
+
   <nav class="bottom-nav" id="bottom-nav">
     <a href="#" class="nav-item active" id="nav-home">
       <div class="nav-icon">
@@ -260,7 +309,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
         <span class="nav-badge" id="nav-cart-count" data-count="0"></span>
       </div>
-      <span class="nav-label">العربة</span>
+      <span class="nav-label">العربة <span id="nav-cart-total-price" style="color:var(--accent); font-weight:800; display:none;"></span></span>
     </a>
 
     <a href="#" class="nav-item" id="nav-orders">
@@ -337,7 +386,21 @@
         $el('nav-info').addEventListener('click', (e) => {
           e.preventDefault();
           updateActiveTab('nav-info');
-          // Can add specific logic here later
+          $el('info-modal').style.display = 'flex';
+        });
+      }
+      
+      if ($el('close-info-modal')) {
+        $el('close-info-modal').addEventListener('click', () => {
+          $el('info-modal').style.display = 'none';
+          updateActiveTab('nav-home');
+        });
+      }
+      
+      if ($el('info-modal-ok')) {
+        $el('info-modal-ok').addEventListener('click', () => {
+          $el('info-modal').style.display = 'none';
+          updateActiveTab('nav-home');
         });
       }
       
@@ -345,7 +408,45 @@
         $el('nav-profile').addEventListener('click', (e) => {
           e.preventDefault();
           updateActiveTab('nav-profile');
-          // Can add specific logic here later
+          const name = localStorage.getItem('pos_customer_name');
+          const phone = localStorage.getItem('pos_customer_phone');
+          if (name && phone) {
+            $el('login-name').value = name;
+            $el('login-phone').value = phone;
+            $el('login-btn').textContent = 'حفظ التعديلات';
+          } else {
+            $el('login-name').value = '';
+            $el('login-phone').value = '';
+            $el('login-btn').textContent = 'دخول';
+          }
+          $el('login-modal').style.display = 'flex';
+        });
+      }
+      
+      if ($el('close-login-modal')) {
+        $el('close-login-modal').addEventListener('click', () => {
+          $el('login-modal').style.display = 'none';
+          updateActiveTab('nav-home');
+        });
+      }
+
+      if ($el('login-btn')) {
+        $el('login-btn').addEventListener('click', () => {
+          const name = $el('login-name').value.trim();
+          const phone = $el('login-phone').value.trim();
+          if (!name || !phone) {
+             alert('يرجى إدخال الاسم ورقم الهاتف');
+             return;
+          }
+          localStorage.setItem('pos_customer_name', name);
+          localStorage.setItem('pos_customer_phone', phone);
+          if ($el('customer-name')) $el('customer-name').value = name;
+          if ($el('customer-phone')) {
+             $el('customer-phone').value = phone;
+             if (window.fetchMyOrders) window.fetchMyOrders(phone);
+          }
+          $el('login-modal').style.display = 'none';
+          updateActiveTab('nav-home');
         });
       }
       
