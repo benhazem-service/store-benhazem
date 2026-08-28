@@ -249,6 +249,7 @@
       </div>
       
       <button id="login-btn" style="width: 100%; background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer;">تسجيل الدخول</button>
+      <button id="logout-btn" style="display: none; width: 100%; background: #ef4444; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 12px;">تسجيل الخروج</button>
     </div>
   </div>
 
@@ -414,10 +415,12 @@
             $el('login-name').value = name;
             $el('login-phone').value = phone;
             $el('login-btn').textContent = 'حفظ التعديلات';
+            if ($el('logout-btn')) $el('logout-btn').style.display = 'block';
           } else {
             $el('login-name').value = '';
             $el('login-phone').value = '';
             $el('login-btn').textContent = 'دخول';
+            if ($el('logout-btn')) $el('logout-btn').style.display = 'none';
           }
           $el('login-modal').style.display = 'flex';
         });
@@ -447,6 +450,17 @@
           }
           $el('login-modal').style.display = 'none';
           updateActiveTab('nav-home');
+        });
+      }
+      if ($el('logout-btn')) {
+        $el('logout-btn').addEventListener('click', () => {
+          if (confirm('هل أنت متأكد أنك تريد تسجيل الخروج؟ (سيتم مسح بياناتك وسلتك)')) {
+            localStorage.removeItem('pos_customer_name');
+            localStorage.removeItem('pos_customer_phone');
+            localStorage.removeItem('customer_cart_v1');
+            localStorage.removeItem('customer_cart_variants_v1');
+            window.location.reload();
+          }
         });
       }
       
