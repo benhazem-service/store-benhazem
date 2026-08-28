@@ -19,6 +19,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   const $ = id  => document.getElementById(id);
   const $$ = sel => document.querySelectorAll(sel);
 
+  // ── Cart Persistence ─────────────────────────────────────────
+  const CART_STORAGE_KEY = 'customer_cart_v1';
+  const VARIANTS_STORAGE_KEY = 'customer_cart_variants_v1';
+
+  function saveCartState() {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      if (window._variantPrices) {
+        localStorage.setItem(VARIANTS_STORAGE_KEY, JSON.stringify(window._variantPrices));
+      } else {
+        localStorage.removeItem(VARIANTS_STORAGE_KEY);
+      }
+    } catch(e) {}
+  }
+
+  function loadCartState() {
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      const savedVariants = localStorage.getItem(VARIANTS_STORAGE_KEY);
+      if (savedCart) cart = JSON.parse(savedCart);
+      if (savedVariants) window._variantPrices = JSON.parse(savedVariants);
+    } catch(e) {}
+  }
+
+
   // ── Toast helper ───────────────────────────────────────────
   function showToast(msg, type = 'info') {
     let container = document.getElementById('cust-toast-container');
@@ -336,7 +361,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let filtered = catalog.products;
     if (currentCategory === 'new-arrivals') {
       filtered = [...catalog.products].sort((a,b) => b.id.localeCompare(a.id)).slice(0, 20);
-    } else if (currentCategory !== 'all') {
+    } else if (currentCategory === 'all') {
+      filtered = [...catalog.products].sort(() => Math.random() - 0.5);
+    } else {
       filtered = filtered.filter(p => p.shelfId === currentCategory);
     }
 
@@ -521,8 +548,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     if ($('cart-count'))          $('cart-count').textContent = count;
+    if ($('nav-cart-count')) {
+      $('nav-cart-count').textContent = count;
+      $('nav-cart-count').dataset.count = count;
+    }
     if ($('cart-total'))          $('cart-total').textContent = total.toFixed(2) + 'DH';
     if ($('drawer-total-price'))  $('drawer-total-price').textContent = total.toFixed(2) + 'DH';
+
+    saveCartState();
+
 
     const cartBar = $('cart-bar');
     if (cartBar) cartBar.style.display = count > 0 ? 'flex' : 'none';
@@ -786,6 +820,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // ── Swipe to change category ────────────────────────────────
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  function updateActiveCategoryUI(catId) {
+    $$('.cat-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.querySelector(`.cat-btn[data-id="${catId}"]`);
+    if (activeBtn) {
+      activeBtn.classList.add('active');
+      activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }
+
+  const swipeZone = $('products-container');
+  if (swipeZone) {
+    swipeZone.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    swipeZone.addEventListener('touchend', e => {
+      touchEndX = e.changedTouches[0].screenX;
+      
+      const threshold = 50; 
+      if (Math.abs(touchEndX - touchStartX) < threshold) return;
+
+      const cats = ['new-arrivals', 'all', ...catalog.shelves.map(s => s.id)];
+      let currentIndex = cats.indexOf(currentCategory);
+      if (currentIndex === -1) currentIndex = 0;
+
+      if (touchEndX < touchStartX) {
+        // Swipe Left (shows next item on the left for RTL)
+        if (currentIndex < cats.length - 1) {
+          currentCategory = cats[currentIndex + 1];
+          updateActiveCategoryUI(currentCategory);
+          renderProducts();
+        }
+      } else if (touchEndX > touchStartX) {
+        // Swipe Right (shows previous item on the right for RTL)
+        if (currentIndex > 0) {
+          currentCategory = cats[currentIndex - 1];
+          updateActiveCategoryUI(currentCategory);
+          renderProducts();
+        }
+      }
+    }, { passive: true });
+  }
+
   // ── Start ─────────────────────────────────────────────────
+  loadCartState();
   await loadCatalog();
 });

@@ -22,7 +22,7 @@
       --radius: 12px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
     header { background: var(--surface); padding: 16px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 10; }
     h1 { font-size: 20px; color: var(--accent); margin-bottom: 4px; }
     p.subtitle { font-size: 13px; color: var(--text-muted); }
@@ -110,12 +110,12 @@
     }
     .add-btn:active { opacity: 0.85; }
     
-    .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); padding: 16px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; z-index: 20; max-width: 600px; margin: 0 auto; }
+    .cart-bar { position: fixed; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; background: var(--surface); padding: 12px 16px; box-shadow: 0 -4px 12px rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; z-index: 20; max-width: 600px; margin: 0 auto; border-top-left-radius: 16px; border-top-right-radius: 16px; }
     .cart-total { font-weight: bold; font-size: 16px; }
     .checkout-btn { background: var(--accent); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     
     /* Cart Drawer */
-    .cart-drawer { position: fixed; top: 100%; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 100; transition: top 0.3s ease-in-out; display: flex; flex-direction: column; max-width: 600px; margin: 0 auto; box-shadow: 0 -4px 20px rgba(0,0,0,0.15); }
+    .cart-drawer { position: fixed; top: 100%; left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); background: var(--bg); z-index: 100; transition: top 0.3s ease-in-out; display: flex; flex-direction: column; max-width: 600px; margin: 0 auto; box-shadow: 0 -4px 20px rgba(0,0,0,0.15); }
     .cart-drawer.active { top: 0; }
     
     .drawer-header { background: var(--surface); padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
@@ -143,6 +143,18 @@
     .drawer-footer { padding: 16px; background: var(--surface); border-top: 1px solid #e2e8f0; }
     .submit-btn { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3); }
     .submit-btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+    
+    /* Bottom Navigation Bar */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: #ffffff; display: flex; justify-content: space-around; align-items: center; padding: 8px 4px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05); z-index: 1000; border-top: 1px solid #f1f5f9; max-width: 600px; margin: 0 auto; }
+    .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; color: var(--text-muted); gap: 4px; flex: 1; position: relative; transition: color 0.2s ease, transform 0.2s ease; -webkit-tap-highlight-color: transparent; }
+    .bottom-nav .nav-item.active { color: var(--accent); }
+    .bottom-nav .nav-item:active { transform: scale(0.92); }
+    .bottom-nav .nav-icon { position: relative; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; }
+    .bottom-nav .nav-icon svg { width: 24px; height: 24px; transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), stroke-width 0.2s ease; }
+    .bottom-nav .nav-item.active .nav-icon svg { transform: scale(1.15); stroke-width: 2.2; }
+    .bottom-nav .nav-label { font-size: 11px; font-weight: 600; text-align: center; white-space: nowrap; letter-spacing: -0.2px; font-family: inherit; }
+    .nav-badge { position: absolute; top: -4px; right: -6px; background-color: #ef4444; color: white; font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid #ffffff; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); transition: transform 0.3s ease; }
+    .nav-badge:empty, .nav-badge[data-count="0"] { display: none; }
   </style>
 </head>
 <body>
@@ -235,7 +247,117 @@
     </div>
   </div>
 
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="#" class="nav-item active" id="nav-home">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      </div>
+      <span class="nav-label">الرئيسية</span>
+    </a>
+    
+    <a href="#" class="nav-item" id="nav-cart">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        <span class="nav-badge" id="nav-cart-count" data-count="0"></span>
+      </div>
+      <span class="nav-label">العربة</span>
+    </a>
+
+    <a href="#" class="nav-item" id="nav-orders">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+      </div>
+      <span class="nav-label">حالة الطلبات</span>
+    </a>
+    
+    <a href="#" class="nav-item" id="nav-info">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+      </div>
+      <span class="nav-label">معلومات</span>
+    </a>
+
+    <a href="https://wa.me/212771018442" class="nav-item" id="nav-contact" target="_blank">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      </div>
+      <span class="nav-label">اتصل بنا</span>
+    </a>
+
+    <a href="#" class="nav-item" id="nav-profile">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </div>
+      <span class="nav-label">حسابي</span>
+    </a>
+  </nav>
+
   <script type="module" src="customer.js?v=2"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const $el = id => document.getElementById(id);
+      const tabs = ['nav-home', 'nav-cart', 'nav-orders', 'nav-info', 'nav-contact', 'nav-profile'];
+      
+      function updateActiveTab(activeId) {
+        tabs.forEach(id => {
+          const el = $el(id);
+          if (el) el.classList.toggle('active', id === activeId);
+        });
+      }
+
+      if ($el('nav-home')) {
+        $el('nav-home').addEventListener('click', (e) => {
+          e.preventDefault();
+          updateActiveTab('nav-home');
+          if ($el('cart-drawer')) $el('cart-drawer').classList.remove('active');
+          if ($el('orders-drawer')) $el('orders-drawer').classList.remove('active');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+
+      if ($el('nav-cart')) {
+        $el('nav-cart').addEventListener('click', (e) => {
+          e.preventDefault();
+          updateActiveTab('nav-cart');
+          if ($el('cart-drawer')) $el('cart-drawer').classList.add('active');
+          if ($el('orders-drawer')) $el('orders-drawer').classList.remove('active');
+        });
+      }
+
+      if ($el('nav-orders')) {
+        $el('nav-orders').addEventListener('click', (e) => {
+          e.preventDefault();
+          updateActiveTab('nav-orders');
+          if ($el('orders-drawer')) $el('orders-drawer').classList.add('active');
+          if ($el('cart-drawer')) $el('cart-drawer').classList.remove('active');
+        });
+      }
+
+      if ($el('nav-info')) {
+        $el('nav-info').addEventListener('click', (e) => {
+          e.preventDefault();
+          updateActiveTab('nav-info');
+          // Can add specific logic here later
+        });
+      }
+      
+      if ($el('nav-profile')) {
+        $el('nav-profile').addEventListener('click', (e) => {
+          e.preventDefault();
+          updateActiveTab('nav-profile');
+          // Can add specific logic here later
+        });
+      }
+      
+      // Update active tab when drawers are closed manually
+      if ($el('close-drawer')) {
+        $el('close-drawer').addEventListener('click', () => updateActiveTab('nav-home'));
+      }
+      if ($el('close-orders-drawer')) {
+        $el('close-orders-drawer').addEventListener('click', () => updateActiveTab('nav-home'));
+      }
+    });
+  </script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
