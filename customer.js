@@ -639,9 +639,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const price    = getCartItemPrice(key);
       const varInfo  = window._variantPrices?.[key];
       const varLabel = varInfo ? `<span style="font-size:11px; color:var(--accent);">${varInfo.label}${varInfo.unitStr}</span>` : '';
+      const imgSrc    = p.imageUrl || p.image;
+      const imgBlock  = imgSrc 
+        ? `<img src="${imgSrc}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; margin-left: 12px; background: #f1f5f9; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">` 
+        : `<div style="width: 44px; height: 44px; border-radius: 8px; margin-left: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">${p.emoji || '📦'}</div>`;
+
       return `
-        <div class="cart-item">
-          <div class="cart-item-info">
+        <div class="cart-item" style="display: flex; align-items: center;">
+          ${imgBlock}
+          <div class="cart-item-info" style="flex: 1;">
             <div class="cart-item-name">${p.name} ${varLabel}</div>
             <div class="cart-item-price">
               ${cart[key] > 1 ? `<span style="color:var(--text-muted); font-size:11px; margin-left:4px;">${price.toFixed(2)}DH &times; ${cart[key]} =</span>` : ''}
@@ -854,16 +860,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (currentIndex === -1) currentIndex = 0;
 
       if (touchEndX < touchStartX) {
-        // Swipe Left (shows next item on the left for RTL)
-        if (currentIndex < cats.length - 1) {
-          currentCategory = cats[currentIndex + 1];
+        // Swipe Left (now goes to previous category for reversed UX)
+        if (currentIndex > 0) {
+          currentCategory = cats[currentIndex - 1];
           updateActiveCategoryUI(currentCategory);
           renderProducts();
         }
       } else if (touchEndX > touchStartX) {
-        // Swipe Right (shows previous item on the right for RTL)
-        if (currentIndex > 0) {
-          currentCategory = cats[currentIndex - 1];
+        // Swipe Right (now goes to next category for reversed UX)
+        if (currentIndex < cats.length - 1) {
+          currentCategory = cats[currentIndex + 1];
           updateActiveCategoryUI(currentCategory);
           renderProducts();
         }
